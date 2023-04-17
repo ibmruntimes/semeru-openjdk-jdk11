@@ -129,20 +129,12 @@ public class KeepAliveCache
             if (keepAliveTimeout == -2) {
                     keepAliveTimeout = 0;
                 }
-            assert keepAliveTimeout >= 0;
-            if (keepAliveTimeout == 0) {
-                      oldClient = http;
-               } 
             v = new ClientVector(keepAliveTimeout > 0 ?
                                  keepAliveTimeout * 1000 : LIFETIME);
             v.put(http);
             super.put(key, v);
         } else {
-            oldClient = v.put(http);
-        }
-        // close after releasing locks
-        if (oldClient != null) {
-            oldClient.closeServer();
+            v.put(http);
         }
     }
 
