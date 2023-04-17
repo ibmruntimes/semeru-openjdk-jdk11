@@ -39,6 +39,7 @@ import java.util.List;
 
 import jdk.internal.misc.InnocuousThread;
 import sun.security.action.GetIntegerAction;
+import sun.net.www.protocol.http.HttpURLConnection;
 import sun.util.logging.PlatformLogger;
 
 /**
