@@ -135,6 +135,7 @@ public class B8293562 {
                             "Wait for second request was interrupted"));
                 }
             } else {
+                System.out.println("name of the thread" +threadName);
                 result.completeExceptionally(new RuntimeException(
                         "Close invoked from unexpected thread"));
             }
