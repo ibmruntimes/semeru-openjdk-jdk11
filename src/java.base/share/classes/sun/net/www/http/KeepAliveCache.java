@@ -152,7 +152,6 @@ public class KeepAliveCache
 
         if (v == null) {
             int keepAliveTimeout = http.getKeepAliveTimeout();
-            System.out.println("Timeout before  " +keepAliveTimeout);
             if (keepAliveTimeout == 0) {
                     keepAliveTimeout = getUserKeepAlive(http.getUsingProxy());
                     if (keepAliveTimeout == -1) {
