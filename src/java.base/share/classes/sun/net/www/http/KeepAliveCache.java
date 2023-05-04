@@ -121,71 +121,71 @@ public class KeepAliveCache
         // after cacheLock is released.
         HttpClient oldClient = null;
         synchronized (this) {
-        boolean startThread = (keepAliveTimer == null);
-        if (!startThread) {
-            if (!keepAliveTimer.isAlive()) {
-                startThread = true;
+            boolean startThread = (keepAliveTimer == null);
+            if (!startThread) {
+                if (!keepAliveTimer.isAlive()) {
+                    startThread = true;
+                } 
             }
-        }
-        if (startThread) {
-            clear();
-            /* Unfortunately, we can't always believe the keep-alive timeout we got
-             * back from the server.  If I'm connected through a Netscape proxy
-             * to a server that sent me a keep-alive
-             * time of 15 sec, the proxy unilaterally terminates my connection
-             * The robustness to get around this is in HttpClient.parseHTTP()
-             */
-            final KeepAliveCache cache = this;
-            AccessController.doPrivileged(new PrivilegedAction<>() {
-                public Void run() {
-                    keepAliveTimer = InnocuousThread.newSystemThread("Keep-Alive-Timer", cache);
-                    keepAliveTimer.setDaemon(true);
-                    keepAliveTimer.setPriority(Thread.MAX_PRIORITY - 2);
-                    keepAliveTimer.start();
-                    return null;
-                }
-            });
-        }
+            if (startThread) {
+                clear();
+                /* Unfortunately, we can't always believe the keep-alive timeout we got
+                 * back from the server.  If I'm connected through a Netscape proxy
+                 * to a server that sent me a keep-alive
+                 * time of 15 sec, the proxy unilaterally terminates my connection
+                 * The robustness to get around this is in HttpClient.parseHTTP()
+                 */
+                final KeepAliveCache cache = this;
+                AccessController.doPrivileged(new PrivilegedAction<>() {
+                    public Void run() {
+                        keepAliveTimer = InnocuousThread.newSystemThread("Keep-Alive-Timer", cache);
+                        keepAliveTimer.setDaemon(true);
+                        keepAliveTimer.setPriority(Thread.MAX_PRIORITY - 2);
+                        keepAliveTimer.start();
+                        return null;
+                    } 
+                });
+             }
 
-        KeepAliveKey key = new KeepAliveKey(url, obj);
-        ClientVector v = super.get(key);
+             KeepAliveKey key = new KeepAliveKey(url, obj);
+             ClientVector v = super.get(key);
 
-        if (v == null) {
-            int keepAliveTimeout = http.getKeepAliveTimeout();
-                if (keepAliveTimeout == 0) {
-                    keepAliveTimeout = getUserKeepAlive(http.getUsingProxy());
-                    if (keepAliveTimeout == -1) {
-                        // same default for server and proxy
-                        keepAliveTimeout = 5;
+             if (v == null) {
+                 int keepAliveTimeout = http.getKeepAliveTimeout();
+                     if (keepAliveTimeout == 0) {
+                         keepAliveTimeout = getUserKeepAlive(http.getUsingProxy());
+                         if (keepAliveTimeout == -1) {
+                             // same default for server and proxy
+                             keepAliveTimeout = 5;
+                         }
+                     } else if (keepAliveTimeout == -1) {
+                         keepAliveTimeout = getUserKeepAlive(http.getUsingProxy());
+                         if (keepAliveTimeout == -1) {
+                             // different default for server and proxy
+                             keepAliveTimeout = http.getUsingProxy() ? 60 : 5;
+                         }
+                    } else if (keepAliveTimeout == -2) {
+                        keepAliveTimeout = 0;
                     }
-                } else if (keepAliveTimeout == -1) {
-                    keepAliveTimeout = getUserKeepAlive(http.getUsingProxy());
-                    if (keepAliveTimeout == -1) {
-                        // different default for server and proxy
-                        keepAliveTimeout = http.getUsingProxy() ? 60 : 5;
+                    // at this point keepAliveTimeout is the number of seconds to keep
+                    // alive, which could be 0, if the user specified 0 for the property
+                    assert keepAliveTimeout >= 0;
+                    if (keepAliveTimeout == 0) {
+                        oldClient = http;
+                    } else {
+                        v = new ClientVector(keepAliveTimeout * 1000);
+                        v.put(http);
+                        super.put(key, v);
                     }
-                } else if (keepAliveTimeout == -2) {
-                    keepAliveTimeout = 0;
-                }
-                // at this point keepAliveTimeout is the number of seconds to keep
-                // alive, which could be 0, if the user specified 0 for the property
-                assert keepAliveTimeout >= 0;
-                if (keepAliveTimeout == 0) {
-                    oldClient = http;
-                } else {
-                    v = new ClientVector(keepAliveTimeout * 1000);
-                    v.put(http);
-                    super.put(key, v);
-                }
-        } else {
-            oldClient = v.put(http);
+             } else {
+                 oldClient = v.put(http);
+             }
         }
+        // close after releasing locks
+	    if (oldClient != null) {
+	        oldClient.closeServer();
+	    }
     }
-    // close after releasing locks
-	if (oldClient != null) {
-	    oldClient.closeServer();
-	}
-   }
 
     // returns the keep alive set by user in system property or -1 if not set
     private static int getUserKeepAlive(boolean isProxy) {
