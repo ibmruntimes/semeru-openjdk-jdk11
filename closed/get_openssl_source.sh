@@ -72,7 +72,7 @@ case "$OPENSSL_VERSION" in
 		OPENSSL_SOURCE_TAG="openssl-$OPENSSL_VERSION"
 		;;
 	*)
-		usage
+		OPENSSL_SOURCE_TAG=$OPENSSL_VERSION
 		;;
 esac
 
