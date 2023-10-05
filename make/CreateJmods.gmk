@@ -227,7 +227,7 @@ $(JMODS_DIR)/$(MODULE).jmod: $(DEPS)
 	        --module-version $(VERSION_SHORT) \
 	        --target-platform '$(OPENJDK_MODULE_TARGET_PLATFORM)' \
 	        --module-path $(JMODS_DIR) \
-	        $(JMOD_FLAGS) $(JMODS_TEMPDIR)/$(notdir $@) \
+	        $(JMOD_FLAGS) -J-Djdk.nativeCrypto=false $(JMODS_TEMPDIR)/$(notdir $@) \
 	)
 	$(MV) $(JMODS_TEMPDIR)/$(notdir $@) $@
 
